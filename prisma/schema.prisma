@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum SerialStatus {
+  IN_STOCK
+  SOLD
+  RETURNED
+  DEFECTIVE
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  CARD
+  DEBT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(STAFF)
+  active    Boolean  @default(true)
+  sales     Sale[]
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id             Int             @id @default(autoincrement())
+  sku            String          @unique
+  name           String
+  categoryId     Int
+  category       Category        @relation(fields: [categoryId], references: [id])
+  brandId        Int?
+  brand          Brand?          @relation(fields: [brandId], references: [id])
+  unit           String          @default("cái")
+  costPrice      Decimal         @db.Decimal(15, 2)
+  sellPrice      Decimal         @db.Decimal(15, 2)
+  stock          Int             @default(0)
+  minStock       Int             @default(3)
+  warrantyMonths Int             @default(12)
+  trackSerial    Boolean         @default(false)
+  specs          Json?
+  imageUrl       String?
+  active         Boolean         @default(true)
+  saleItems      SaleItem[]
+  purchaseItems  PurchaseItem[]
+  serials        ProductSerial[]
+  warranties     Warranty[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([sku])
+  @@index([categoryId])
+}
+
+model Customer {
+  id         Int        @id @default(autoincrement())
+  name       String
+  phone      String     @unique
+  address    String?
+  type       String     @default("RETAIL")
+  debt       Decimal    @default(0) @db.Decimal(15, 2)
+  sales      Sale[]
+  warranties Warranty[]
+  createdAt  DateTime   @default(now())
+}
+
+model Supplier {
+  id             Int             @id @default(autoincrement())
+  name           String
+  phone          String?
+  address        String?
+  debt           Decimal         @default(0) @db.Decimal(15, 2)
+  purchaseOrders PurchaseOrder[]
+}
+
+model Sale {
+  id            Int             @id @default(autoincrement())
+  code          String          @unique
+  customerId    Int?
+  customer      Customer?       @relation(fields: [customerId], references: [id])
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  items         SaleItem[]
+  subtotal      Decimal         @db.Decimal(15, 2)
+  discount      Decimal         @default(0) @db.Decimal(15, 2)
+  total         Decimal         @db.Decimal(15, 2)
+  paid          Decimal         @db.Decimal(15, 2)
+  paymentMethod PaymentMethod   @default(CASH)
+  note          String?
+  createdAt     DateTime        @default(now())
+  serials       ProductSerial[]
+  warranties    Warranty[]
+}
+
+model SaleItem {
+  id        Int             @id @default(autoincrement())
+  saleId    Int
+  sale      Sale            @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product         @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal         @db.Decimal(15, 2)
+  lineTotal Decimal         @db.Decimal(15, 2)
+  serials   ProductSerial[]
+}
+
+model PurchaseOrder {
+  id         Int            @id @default(autoincrement())
+  code       String         @unique
+  supplierId Int
+  supplier   Supplier       @relation(fields: [supplierId], references: [id])
+  items      PurchaseItem[]
+  total      Decimal        @db.Decimal(15, 2)
+  paid       Decimal        @default(0) @db.Decimal(15, 2)
+  note       String?
+  createdAt  DateTime       @default(now())
+}
+
+model PurchaseItem {
+  id              Int             @id @default(autoincrement())
+  purchaseOrderId Int
+  purchaseOrder   PurchaseOrder   @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       Int
+  product         Product         @relation(fields: [productId], references: [id])
+  quantity        Int
+  unitCost        Decimal         @db.Decimal(15, 2)
+  serials         ProductSerial[]
+}
+
+model ProductSerial {
+  id             Int           @id @default(autoincrement())
+  serialNumber   String        @unique
+  productId      Int
+  product        Product       @relation(fields: [productId], references: [id])
+  status         SerialStatus  @default(IN_STOCK)
+  purchaseItemId Int?
+  purchaseItem   PurchaseItem? @relation(fields: [purchaseItemId], references: [id])
+  saleItemId     Int?
+  saleItem       SaleItem?     @relation(fields: [saleItemId], references: [id])
+  saleId         Int?
+  sale           Sale?         @relation(fields: [saleId], references: [id])
+  importPrice    Decimal?      @db.Decimal(15, 2)
+  importedAt     DateTime?
+  soldAt         DateTime?
+  note           String?
+  createdAt      DateTime      @default(now())
+  warranty       Warranty?
+
+  @@index([productId, status])
+  @@index([serialNumber])
+}
+
+model Setting {
+  id          Int      @id @default(1)
+  shopName    String   @default("CỬA HÀNG THIẾT BỊ ĐIỆN TỬ")
+  address     String   @default("")
+  phone       String   @default("")
+  taxCode     String   @default("")
+  bankId      String   @default("MB")
+  bankAccount String   @default("")
+  bankOwner   String   @default("")
+  updatedAt   DateTime @updatedAt
+}
+
+model Warranty {
+  id             Int             @id @default(autoincrement())
+  serialId       Int             @unique
+  serial         ProductSerial   @relation(fields: [serialId], references: [id], onDelete: Cascade)
+  productId      Int
+  product        Product         @relation(fields: [productId], references: [id])
+  customerId     Int?
+  customer       Customer?       @relation(fields: [customerId], references: [id])
+  saleId         Int?
+  sale           Sale?           @relation(fields: [saleId], references: [id])
+  startDate      DateTime
+  endDate        DateTime
+  warrantyMonths Int
+  notes          String?
+  claims         WarrantyClaim[]
+  createdAt      DateTime        @default(now())
+
+  @@index([endDate])
+  @@index([productId])
+}
+
+model WarrantyClaim {
+  id          Int      @id @default(autoincrement())
+  warrantyId  Int
+  warranty    Warranty @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
+  issueDate   DateTime @default(now())
+  description String
+  resolution  String?
+  cost        Decimal  @default(0) @db.Decimal(15, 2)
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  @@index([warrantyId])
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  userName    String
+  action      String
+  entity      String
+  entityId    String?
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([action])
+  @@index([createdAt])
+}
