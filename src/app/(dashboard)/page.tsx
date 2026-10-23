@@ -22,9 +22,12 @@ export default function DashboardHome() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="p-4">
-          <div className="flex items-center gap-2 text-slate-500 text-sm"><DollarSign className="h-4 w-4" /> Doanh thu hôm nay</div>
-          <p className="text-2xl font-bold mt-1">{fmt(data.today.revenue)}</p>
-          <p className="text-xs text-slate-400 mt-1">{data.today.orders} đơn · LN: {fmt(data.today.profit)}</p>
+            <div className="flex items-center gap-2 text-slate-500 text-sm"><DollarSign className="h-4 w-4" /> Doanh thu hôm nay</div>
+            <p className="text-2xl font-bold mt-1">{fmt(data.today.revenue)}</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {data.today.orders} đơn · LN: {fmt(data.today.profit)} 
+              {data.today.bonus > 0 && <span className="text-green-600 ml-1">· Tip: {fmt(data.today.bonus)}</span>}
+            </p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 text-slate-500 text-sm"><TrendingUp className="h-4 w-4" /> Doanh thu tháng</div>

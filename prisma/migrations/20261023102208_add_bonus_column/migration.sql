@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Sale" ADD COLUMN     "bonus" DECIMAL(15,2) NOT NULL DEFAULT 0;

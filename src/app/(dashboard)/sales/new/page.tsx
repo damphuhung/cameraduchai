@@ -320,7 +320,7 @@ export default function POSPage() {
             </div>
             <div className="flex justify-between text-sm">
               {paid > total ? (
-                <><span className="text-green-600">Tiền thừa</span><span className="text-green-600 font-medium">{(paid - total).toLocaleString()}đ</span></>
+                <><span className="text-green-600">Tiền thừa (Bonus)</span><span className="text-green-600 font-medium">{(paid - total).toLocaleString()}đ</span></>
               ) : paid < total ? (
                 <><span className="text-red-600">Còn nợ</span><span className="text-red-600 font-medium">{(total - paid).toLocaleString()}đ</span></>
               ) : (

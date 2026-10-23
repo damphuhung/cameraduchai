@@ -126,11 +126,13 @@ export default function ReportsPage() {
       {/* Profit */}
       {tab === 'profit' && profit && (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Card className="p-3"><p className="text-xs text-slate-500">Doanh thu</p><p className="text-lg font-bold">{fmt(profit.summary.totalRevenue)}</p></Card>
-            <Card className="p-3"><p className="text-xs text-slate-500">Giá vốn</p><p className="text-lg font-bold">{fmt(profit.summary.totalCost)}</p></Card>
-            <Card className="p-3"><p className="text-xs text-slate-500">Lợi nhuận</p><p className="text-lg font-bold text-green-600">{fmt(profit.summary.totalProfit)}</p></Card>
-            <Card className="p-3"><p className="text-xs text-slate-500">Biên LN</p><p className="text-lg font-bold">{pct(profit.summary.margin)}</p></Card>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <Card className="p-3"><p className="text-xs text-slate-500">Doanh thu</p><p className="text-lg font-bold">{fmt(revenue.summary.totalRevenue)}</p></Card>
+            <Card className="p-3"><p className="text-xs text-slate-500">Số đơn</p><p className="text-lg font-bold">{revenue.summary.totalOrders}</p></Card>
+            <Card className="p-3"><p className="text-xs text-slate-500">TB/đơn</p><p className="text-lg font-bold">{fmt(Math.round(revenue.summary.avgOrderValue))}</p></Card>
+            <Card className="p-3"><p className="text-xs text-slate-500">Còn nợ</p><p className="text-lg font-bold text-red-600">{fmt(revenue.summary.totalDebt)}</p></Card>
+              {/* THÊM THẺ BONUS */}
+            <Card className="p-3 border-green-200 bg-green-50"><p className="text-xs text-green-700">Tiền thừa (Bonus)</p><p className="text-lg font-bold text-green-700">{fmt(revenue.summary.totalBonus || 0)}</p></Card>
           </div>
 
           <Card className="p-4">

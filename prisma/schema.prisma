@@ -115,6 +115,7 @@ model Sale {
   discount      Decimal         @default(0) @db.Decimal(15, 2)
   total         Decimal         @db.Decimal(15, 2)
   paid          Decimal         @db.Decimal(15, 2)
+  bonus         Decimal        @default(0) @db.Decimal(15, 2)
   paymentMethod PaymentMethod   @default(CASH)
   note          String?
   createdAt     DateTime        @default(now())

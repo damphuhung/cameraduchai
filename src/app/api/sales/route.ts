@@ -107,7 +107,9 @@ export async function POST(req: Request) {
 
     const subtotal = body.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
     const total = Math.max(0, subtotal - body.discount);
-
+    // TÍNH TOÁN BONUS VÀ PAID THỰC TẾ
+    const actualPaid = Math.min(body.paid, total);
+    const bonus = Math.max(0, body.paid - total);
     let code = body.code?.trim();
     if (!code) {
       code = `HD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -121,7 +123,7 @@ export async function POST(req: Request) {
         data: {
           code, customerId: body.customerId ?? null, userId: session.user.id,
           subtotal, discount: body.discount, total,
-          paid: body.paid, paymentMethod: body.paymentMethod, note: body.note,
+          paid: actualPaid, bonus: bonus, paymentMethod: body.paymentMethod, note: body.note,
           items: { create: body.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice, lineTotal: i.unitPrice * i.quantity })) },
         },
         include: { items: true },

@@ -40,8 +40,18 @@ export async function GET() {
     .slice(0, 5);
 
   return NextResponse.json({
-    today: { revenue: todaySales.reduce((s, x) => s + Number(x.total), 0), orders: todaySales.length, profit: profit(todaySales) },
-    month: { revenue: monthSales.reduce((s, x) => s + Number(x.total), 0), orders: monthSales.length, profit: profit(monthSales) },
+    today: { 
+      revenue: todaySales.reduce((s, x) => s + Number(x.total), 0), 
+      orders: todaySales.length, 
+      profit: profit(todaySales),
+      bonus: todaySales.reduce((s, x) => s + Number(x.bonus), 0) // <-- THÊM
+    },
+    month: { 
+      revenue: monthSales.reduce((s, x) => s + Number(x.total), 0), 
+      orders: monthSales.length, 
+      profit: profit(monthSales),
+      bonus: monthSales.reduce((s, x) => s + Number(x.bonus), 0) // <-- THÊM
+    },
     lowStockCount: lowStock.length,
     totalProducts: products.length,
     expiringWarrantyCount: expiringWarranties.length,

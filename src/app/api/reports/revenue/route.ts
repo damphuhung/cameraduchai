@@ -20,7 +20,9 @@ export async function GET(req: Request) {
 
   const totalRevenue = sales.reduce((s, x) => s + Number(x.total), 0);
   const totalPaid = sales.reduce((s, x) => s + Number(x.paid), 0);
-  const totalDebt = sales.reduce((s, x) => s + (Number(x.total) - Number(x.paid)), 0);
+  const totalBonus = sales.reduce((s, x) => s + Number(x.bonus), 0); // <-- THÊM MỚI
+  // Đảm bảo công nợ không bao giờ âm
+  const totalDebt = sales.reduce((s, x) => s + Math.max(0, Number(x.total) - Number(x.paid)), 0); 
   const totalOrders = sales.length;
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
@@ -53,7 +55,7 @@ export async function GET(req: Request) {
     .slice(0, 10);
 
   return NextResponse.json({
-    summary: { totalRevenue, totalOrders, avgOrderValue, totalPaid, totalDebt },
+    summary: { totalRevenue, totalOrders, avgOrderValue, totalPaid, totalDebt, totalBonus }, // <-- Thêm totalBonus
     byDay,
     topProducts,
     range: { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) },
