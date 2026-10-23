@@ -7,22 +7,14 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { SlidersHorizontal, X, ArrowUpDown } from 'lucide-react';
-
-type Product = {
-  id: number; sku: string; name: string;
-  categoryId: number; brandId: number | null;
-  unit: string; costPrice: string; sellPrice: string;
-  stock: number; minStock: number; warrantyMonths: number;
-  trackSerial: boolean;
-  category: { name: string }; brand: { name: string } | null;
-};
+import { SlidersHorizontal, X, ArrowUpDown, Settings2 } from 'lucide-react';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [cats, setCats] = useState<{ id: number; name: string }[]>([]);
-  const [brands, setBrands] = useState<{ id: number; name: string }[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [cats, setCats] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
 
+  // Filters
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [brandId, setBrandId] = useState('');
@@ -32,9 +24,15 @@ export default function ProductsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Product Form
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
+  const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({ sku: '', name: '', categoryId: '', brandId: '', unit: 'cái', costPrice: 0, sellPrice: 0, stock: 0, minStock: 3, warrantyMonths: 12, trackSerial: false });
+
+  // Manage Categories/Brands
+  const [manageOpen, setManageOpen] = useState(false);
+  const [manageType, setManageType] = useState<'category'|'brand'>('category');
+  const [newItemName, setNewItemName] = useState('');
 
   async function load() {
     const params = new URLSearchParams();
@@ -66,7 +64,7 @@ export default function ProductsPage() {
     setForm({ sku: '', name: '', categoryId: '', brandId: '', unit: 'cái', costPrice: 0, sellPrice: 0, stock: 0, minStock: 3, warrantyMonths: 12, trackSerial: false });
     setOpen(true);
   }
-  function openEdit(p: Product) {
+  function openEdit(p: any) {
     setEditing(p);
     setForm({ sku: p.sku, name: p.name, categoryId: String(p.categoryId), brandId: p.brandId ? String(p.brandId) : '', unit: p.unit, costPrice: Number(p.costPrice), sellPrice: Number(p.sellPrice), stock: p.stock, minStock: p.minStock, warrantyMonths: p.warrantyMonths, trackSerial: p.trackSerial });
     setOpen(true);
@@ -83,6 +81,22 @@ export default function ProductsPage() {
     await fetch(`/api/products/${id}`, { method: 'DELETE' }); load();
   }
 
+  async function addManageItem() {
+    if (!newItemName.trim()) return;
+    const url = manageType === 'category' ? '/api/categories' : '/api/brands';
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newItemName }) });
+    if (!res.ok) { alert((await res.json()).error); return; }
+    setNewItemName('');
+    load();
+  }
+  async function deleteManageItem(id: number) {
+    if (!confirm('Xoá mục này?')) return;
+    const url = manageType === 'category' ? '/api/categories' : '/api/brands';
+    const res = await fetch(`${url}?id=${id}`, { method: 'DELETE' });
+    if (!res.ok) alert((await res.json()).error);
+    else load();
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -92,7 +106,10 @@ export default function ProductsPage() {
           <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
             <SlidersHorizontal className="h-4 w-4 mr-1" /> Lọc {hasFilter ? '(bật)' : ''}
           </Button>
-          <Button onClick={openNew}>+ Thêm</Button>
+          <Button variant="outline" onClick={() => setManageOpen(true)}>
+            <Settings2 className="h-4 w-4 mr-1" /> Quản lý Danh mục/Hãng
+          </Button>
+          <Button onClick={openNew}>+ Thêm SP</Button>
         </div>
       </div>
 
@@ -101,7 +118,7 @@ export default function ProductsPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <div>
               <Label className="text-xs">Danh mục</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select value={categoryId || ""} onValueChange={setCategoryId}>
                 <SelectTrigger><SelectValue placeholder="Tất cả" /></SelectTrigger>
                 <SelectContent>
                   {cats.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
@@ -110,7 +127,7 @@ export default function ProductsPage() {
             </div>
             <div>
               <Label className="text-xs">Hãng</Label>
-              <Select value={brandId} onValueChange={setBrandId}>
+              <Select value={brandId || ""} onValueChange={setBrandId}>
                 <SelectTrigger><SelectValue placeholder="Tất cả" /></SelectTrigger>
                 <SelectContent>
                   {brands.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
@@ -119,7 +136,7 @@ export default function ProductsPage() {
             </div>
             <div>
               <Label className="text-xs">Tồn kho</Label>
-              <Select value={stockStatus} onValueChange={setStockStatus}>
+              <Select value={stockStatus || ""} onValueChange={setStockStatus}>
                 <SelectTrigger><SelectValue placeholder="Tất cả" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="in">Còn hàng</SelectItem>
@@ -130,7 +147,7 @@ export default function ProductsPage() {
             </div>
             <div>
               <Label className="text-xs">Serial</Label>
-              <Select value={trackSerial} onValueChange={setTrackSerial}>
+              <Select value={trackSerial || ""} onValueChange={setTrackSerial}>
                 <SelectTrigger><SelectValue placeholder="Tất cả" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">Có S/N</SelectItem>
@@ -154,7 +171,7 @@ export default function ProductsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="outline" size="icon" onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')} title={sortDir === 'asc' ? 'Tăng dần' : 'Giảm dần'}>
+            <Button variant="outline" size="icon" onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}>
               <ArrowUpDown className="h-4 w-4" />
             </Button>
             {hasFilter && <Button variant="ghost" size="sm" onClick={clearFilters}><X className="h-4 w-4 mr-1" /> Xoá lọc</Button>}
@@ -167,15 +184,8 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr className="text-left">
-                <th className="px-3 py-2">SKU</th>
-                <th className="px-3 py-2">Tên</th>
-                <th className="px-3 py-2">Danh mục</th>
-                <th className="px-3 py-2">Hãng</th>
-                <th className="px-3 py-2 text-right">Giá nhập</th>
-                <th className="px-3 py-2 text-right">Giá bán</th>
-                <th className="px-3 py-2 text-right">Tồn</th>
-                <th className="px-3 py-2">S/N</th>
-                <th className="px-3 py-2"></th>
+                <th className="px-3 py-2">SKU</th><th className="px-3 py-2">Tên</th><th className="px-3 py-2">Danh mục</th><th className="px-3 py-2">Hãng</th>
+                <th className="px-3 py-2 text-right">Giá nhập</th><th className="px-3 py-2 text-right">Giá bán</th><th className="px-3 py-2 text-right">Tồn</th><th className="px-3 py-2">S/N</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -187,9 +197,7 @@ export default function ProductsPage() {
                   <td className="px-3 py-2">{p.brand?.name ?? '—'}</td>
                   <td className="px-3 py-2 text-right">{Number(p.costPrice).toLocaleString()}</td>
                   <td className="px-3 py-2 text-right">{Number(p.sellPrice).toLocaleString()}</td>
-                  <td className="px-3 py-2 text-right">
-                    <Badge variant={p.stock === 0 ? 'destructive' : p.stock < p.minStock ? 'outline' : 'secondary'}>{p.stock}</Badge>
-                  </td>
+                  <td className="px-3 py-2 text-right"><Badge variant={p.stock === 0 ? 'destructive' : p.stock < p.minStock ? 'outline' : 'secondary'}>{p.stock}</Badge></td>
                   <td className="px-3 py-2">{p.trackSerial ? '✓' : ''}</td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">
                     <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>Sửa</Button>
@@ -197,7 +205,6 @@ export default function ProductsPage() {
                   </td>
                 </tr>
               ))}
-              {products.length === 0 && <tr><td colSpan={9} className="text-center py-8 text-slate-500">Không có sản phẩm</td></tr>}
             </tbody>
           </table>
         </div>
@@ -205,19 +212,16 @@ export default function ProductsPage() {
           {products.map((p) => (
             <div key={p.id} className="p-3" onClick={() => openEdit(p)}>
               <div className="flex justify-between">
-                <div>
-                  <p className="font-medium">{p.name}</p>
-                  <p className="text-xs text-slate-500 font-mono">{p.sku} · {p.category.name}</p>
-                </div>
+                <div><p className="font-medium">{p.name}</p><p className="text-xs text-slate-500 font-mono">{p.sku} · {p.category.name}</p></div>
                 <Badge variant={p.stock === 0 ? 'destructive' : p.stock < p.minStock ? 'outline' : 'secondary'}>{p.stock}</Badge>
               </div>
               <p className="text-sm mt-1">{Number(p.sellPrice).toLocaleString()}đ</p>
             </div>
           ))}
-          {products.length === 0 && <p className="p-6 text-center text-slate-500">Không có sản phẩm</p>}
         </div>
       </Card>
 
+      {/* Dialog Edit/Add Product */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}</DialogTitle></DialogHeader>
@@ -230,16 +234,24 @@ export default function ProductsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Danh mục</Label>
-                <Select value={form.categoryId} onValueChange={(v) => setForm({ ...form, categoryId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Chọn..." /></SelectTrigger>
-                  <SelectContent>{cats.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                <Select value={form.categoryId || ""} onValueChange={(v) => setForm({ ...form, categoryId: v })}>
+                  <SelectTrigger>
+                    {form.categoryId 
+                    ? (cats.find(c => String(c.id) === form.categoryId)?.name || "Chọn...") 
+                    : "Chọn..."}
+                  </SelectTrigger>
+                <SelectContent>{cats.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Hãng</Label>
-                <Select value={form.brandId} onValueChange={(v) => setForm({ ...form, brandId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Không" /></SelectTrigger>
-                  <SelectContent>{brands.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}</SelectContent>
+                <Select value={form.brandId || ""} onValueChange={(v) => setForm({ ...form, brandId: v })}>
+                  <SelectTrigger>
+                    {form.brandId 
+                    ? (brands.find(b => String(b.id) === form.brandId)?.name || "Không") 
+                    : "Không"}
+                  </SelectTrigger>
+                <SelectContent>{brands.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
@@ -257,6 +269,32 @@ export default function ProductsPage() {
               Quản lý theo số serial (S/N)
             </label>
             <Button onClick={save} className="w-full">Lưu</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Quản lý Danh mục & Hãng */}
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Quản lý Danh mục & Hãng</DialogTitle></DialogHeader>
+          <div className="flex gap-2 mb-4">
+            <Button variant={manageType === 'category' ? 'default' : 'outline'} onClick={() => setManageType('category')} className="flex-1">Danh mục</Button>
+            <Button variant={manageType === 'brand' ? 'default' : 'outline'} onClick={() => setManageType('brand')} className="flex-1">Hãng</Button>
+          </div>
+          
+          <div className="flex gap-2 mb-4">
+            <Input value={newItemName} onChange={e => setNewItemName(e.target.value)} placeholder="Tên mới..." onKeyDown={e => e.key === 'Enter' && addManageItem()} />
+            <Button onClick={addManageItem}>Thêm</Button>
+          </div>
+
+          <div className="max-h-60 overflow-y-auto border rounded divide-y">
+            {(manageType === 'category' ? cats : brands).map(item => (
+              <div key={item.id} className="flex justify-between items-center p-2">
+                <span>{item.name}</span>
+                <Button size="sm" variant="ghost" className="text-red-600 h-7 px-2" onClick={() => deleteManageItem(item.id)}>Xoá</Button>
+              </div>
+            ))}
+            {(manageType === 'category' ? cats : brands).length === 0 && <p className="p-4 text-center text-sm text-slate-500">Chưa có dữ liệu</p>}
           </div>
         </DialogContent>
       </Dialog>

@@ -216,12 +216,17 @@ export default function POSPage() {
           <Card className="p-3 space-y-2">
             <Label className="text-xs">Khách hàng</Label>
             <div className="flex gap-2">
-              <Select value={customerId} onValueChange={setCustomerId}>
-                <SelectTrigger><SelectValue placeholder="Khách lẻ" /></SelectTrigger>
-                <SelectContent>
-                  {customers.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name} · {c.phone}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Select value={customerId || ""} onValueChange={setCustomerId}>
+                <SelectTrigger>
+          {/* Thay <SelectValue /> bằng logic hiển thị thủ công */}
+           {customerId 
+            ? (customers.find(c => String(c.id) === customerId)?.name || "Khách lẻ") 
+           : "Khách lẻ"}
+          </SelectTrigger>
+            <SelectContent>
+             {customers.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name} · {c.phone}</SelectItem>)}
+            </SelectContent>
+          </Select>
               <Button variant="outline" size="icon" onClick={() => setNewCustomerOpen(true)}><Plus className="h-4 w-4" /></Button>
             </div>
             {customerId && <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={() => setCustomerId('')}>Bỏ chọn</Button>}
@@ -274,13 +279,16 @@ export default function POSPage() {
             <div className="flex justify-between text-lg font-bold"><span>Tổng</span><span>{total.toLocaleString()}đ</span></div>
             <div>
               <Label className="text-xs">Phương thức thanh toán</Label>
-              <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select value={paymentMethod || ""} onValueChange={(v) => setPaymentMethod(v as any)}>
+                <SelectTrigger>
+                {/* Thay <SelectValue /> bằng logic hiển thị thủ công */}
+                 {paymentMethod === 'CASH' ? '💵 Tiền mặt' : paymentMethod === 'TRANSFER' ? '🏦 Chuyển khoản' : 'Chọn...'}
+                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CASH">💵 Tiền mặt</SelectItem>
-                  <SelectItem value="TRANSFER">🏦 Chuyển khoản</SelectItem>
-                </SelectContent>
-              </Select>
+                <SelectItem value="CASH">💵 Tiền mặt</SelectItem>
+                <SelectItem value="TRANSFER">🏦 Chuyển khoản</SelectItem>
+              </SelectContent>
+            </Select>
             </div>
 
             {paymentMethod === 'TRANSFER' && (
@@ -303,7 +311,7 @@ export default function POSPage() {
             )}
 
             <div>
-              <Label className="text-xs">Đã trả</Label>
+              <Label className="text-xs">Khách đưa</Label>
               <Input type="number" min={0} value={paid} onChange={(e) => setPaid(Math.max(0, Number(e.target.value) || 0))} />
               <div className="flex gap-2 mt-1">
                 <Button size="sm" variant="outline" className="text-xs flex-1" onClick={() => setPaid(total)}>Đã nhận đủ</Button>

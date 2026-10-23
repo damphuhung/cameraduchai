@@ -8,12 +8,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Role {
-  ADMIN
-  MANAGER
-  STAFF
-}
-
 enum SerialStatus {
   IN_STOCK
   SOLD
@@ -33,10 +27,18 @@ model User {
   email     String   @unique
   password  String
   name      String
-  role      Role     @default(STAFF)
+  role      String   @default("STAFF") // <-- Đổi thành String
   active    Boolean  @default(true)
   sales     Sale[]
   createdAt DateTime @default(now())
+}
+
+// THÊM model Role mới vào:
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
 }
 
 model Category {

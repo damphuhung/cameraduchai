@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, Truck, ScanLine, History, Database,
@@ -12,27 +13,34 @@ const menu = [
   { href: '/sales/new',       label: 'Bán hàng',   icon: ShoppingCart },
   { href: '/sales',           label: 'Đơn hàng',   icon: ReceiptText },
   { href: '/products',        label: 'Sản phẩm',   icon: Package },
-  { href: '/purchase-orders', label: 'Nhập kho',   icon: Truck },
-  { href: '/suppliers',       label: 'Nhà CC',     icon: Building2 },
+  { href: '/purchase-orders', label: 'Quản lý Kho',   icon: Truck },
+  { href: '/suppliers',       label: 'Nhà Cung Cấp',     icon: Building2 },
   { href: '/customers',       label: 'Khách hàng', icon: Users },
   { href: '/warranty',        label: 'Bảo hành',   icon: ShieldCheck },
-  { href: '/serials/lookup',  label: 'Tra S/N',    icon: ScanLine },
-  { href: '/import-export',   label: 'Excel',      icon: FileSpreadsheet, roles: ['ADMIN', 'MANAGER'] },
+  { href: '/serials/lookup',  label: 'Tra cứu S/N',    icon: ScanLine },
+  { href: '/import-export',   label: 'Export/Import',      icon: FileSpreadsheet, roles: ['ADMIN', 'MANAGER'] },
   { href: '/settings',        label: 'Cấu hình',   icon: Cog,             roles: ['ADMIN'] },
   { href: '/reports',         label: 'Báo cáo',    icon: BarChart3,       roles: ['ADMIN', 'MANAGER'] },
-  { href: '/backup',          label: 'Backup',     icon: Database,        roles: ['ADMIN'] },
+  { href: '/backup',          label: 'Backup/Restore',     icon: Database,        roles: ['ADMIN'] },
   { href: '/audit-log',       label: 'Nhật ký',    icon: History,         roles: ['ADMIN'] },
-  { href: '/users',           label: 'Nhân viên',  icon: Settings,        roles: ['ADMIN'] },
+  { href: '/users',           label: 'Quản lý Nhân viên',  icon: Settings,        roles: ['ADMIN'] },
 ];
 
 export function Sidebar({ role }: { role: string }) {
   const path = usePathname();
+  const [shopName, setShopName] = useState('CAMERA ĐỨC HẢI - Trang Quản lý bán hàng');
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(s => {
+      if (s.shopName) setShopName(s.shopName);
+    });
+  }, []);
   const visible = menu.filter((m: any) => !m.roles || m.roles.includes(role));
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 border-r bg-white h-screen sticky top-0">
       <div className="h-16 flex items-center px-6 border-b">
-        <span className="text-lg font-bold">ERP Cửa hàng</span>
+        <span className="text-base font-bold truncate">{shopName}</span>
       </div>
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {visible.map((m: any) => {
