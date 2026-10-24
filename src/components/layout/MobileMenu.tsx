@@ -1,18 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { SidebarContent } from './SidebarContent';
+import { useSettings } from '@/lib/settings-context';
 
 export function MobileMenu({ role }: { role: string }) {
   const [open, setOpen] = useState(false);
-  const [shopName, setShopName] = useState('ERP Cửa hàng');
-
-  useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(s => {
-      if (s.shopName) setShopName(s.shopName);
-    });
-  }, []);
+  const { settings } = useSettings();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -25,7 +20,7 @@ export function MobileMenu({ role }: { role: string }) {
         <SheetTitle className="sr-only">Menu điều hướng</SheetTitle>
         
         <div className="h-16 flex items-center px-6 border-b shrink-0">
-          <span className="text-base font-bold truncate">{shopName}</span>
+          <span className="text-base font-bold truncate">{settings.shopName}</span>
         </div>
         
         <SidebarContent role={role} onItemClick={() => setOpen(false)} />

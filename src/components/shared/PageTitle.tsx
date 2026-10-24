@@ -1,16 +1,13 @@
 'use client';
 import { useEffect } from 'react';
+import { useSettings } from '@/lib/settings-context';
 
 export function PageTitle() {
+  const { settings, loaded } = useSettings();
   useEffect(() => {
-    fetch('/api/settings')
-      .then((r) => r.json())
-      .then((s) => {
-        if (s.shopName) {
-          document.title = `${s.shopName} | Quản lý bán hàng`;
-        }
-      })
-      .catch(() => {});
-  }, []);
+    if (loaded && settings.shopName) {
+      document.title = `${settings.shopName} | Quản lý bán hàng`;
+    }
+  }, [loaded, settings.shopName]);
   return null;
 }

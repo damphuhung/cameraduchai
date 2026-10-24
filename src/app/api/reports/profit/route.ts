@@ -2,18 +2,27 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { dayKeyVN, parseVNDate, startOfMonthVN } from '@/lib/date';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const now = new Date();
-  const fromStr = searchParams.get('from');
-  const toStr = searchParams.get('to');
-  const from = fromStr ? new Date(fromStr + 'T00:00:00') : new Date(now.getFullYear(), now.getMonth(), 1);
-  const to = toStr ? new Date(toStr + 'T23:59:59') : now;
+  const from = parseVNDate(searchParams.get('from'), 'start') ?? startOfMonthVN(now);
+  const to = parseVNDate(searchParams.get('to'), 'end') ?? now;
 
+  // Chỉ lấy các trường cần dùng và gộp thành 1 truy vấn
   const sales = await prisma.sale.findMany({
+    relationLoadStrategy: 'join',
     where: { createdAt: { gte: from, lte: to } },
-    include: { items: { include: { product: true } } },
+    select: {
+      createdAt: true,
+      items: {
+        select: {
+          productId: true, quantity: true, lineTotal: true,
+          product: { select: { name: true, sku: true, costPrice: true } },
+        },
+      },
+    },
     orderBy: { createdAt: 'asc' },
   });
 
@@ -23,7 +32,7 @@ export async function GET(req: Request) {
   const byDay = new Map<string, { revenue: number; cost: number }>();
 
   for (const s of sales) {
-    const dayKey = s.createdAt.toISOString().slice(0, 10);
+    const dayKey = dayKeyVN(s.createdAt);
     const dayEntry = byDay.get(dayKey) ?? { revenue: 0, cost: 0 };
 
     for (const it of s.items) {

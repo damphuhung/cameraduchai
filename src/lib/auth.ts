@@ -9,16 +9,13 @@ export const authOptions: NextAuthOptions = {
     credentials: { email: {}, password: {} },
     async authorize(creds) {
   try {
-    console.log('🔍 [LOGIN ATTEMPT]', creds?.email);
     if (!creds?.email || !creds?.password) return null;
 
     const user = await prisma.user.findUnique({ where: { email: creds.email } });
-    console.log('👤 [USER FOUND]', user ? 'YES' : 'NO', user?.active);
 
     if (!user || !user.active) return null;
 
     const ok = await bcrypt.compare(creds.password, user.password);
-    console.log('🔑 [PASSWORD MATCH]', ok);
 
     if (!ok) return null;
     return { id: user.id, email: user.email, name: user.name, role: user.role };

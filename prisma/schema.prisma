@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
@@ -121,6 +122,10 @@ model Sale {
   createdAt     DateTime        @default(now())
   serials       ProductSerial[]
   warranties    Warranty[]
+
+  @@index([createdAt])
+  @@index([customerId])
+  @@index([userId])
 }
 
 model SaleItem {
@@ -133,6 +138,9 @@ model SaleItem {
   unitPrice Decimal         @db.Decimal(15, 2)
   lineTotal Decimal         @db.Decimal(15, 2)
   serials   ProductSerial[]
+
+  @@index([saleId])
+  @@index([productId])
 }
 
 model PurchaseOrder {
@@ -144,7 +152,12 @@ model PurchaseOrder {
   total      Decimal        @db.Decimal(15, 2)
   paid       Decimal        @default(0) @db.Decimal(15, 2)
   note       String?
+  proofImages Json?           // <-- Thêm dòng này để lưu mảng link ảnh
+  payments    PurchasePayment[] // <-- Thêm dòng này
   createdAt  DateTime       @default(now())
+
+  @@index([supplierId])
+  @@index([createdAt])
 }
 
 model PurchaseItem {
@@ -156,6 +169,9 @@ model PurchaseItem {
   quantity        Int
   unitCost        Decimal         @db.Decimal(15, 2)
   serials         ProductSerial[]
+
+  @@index([purchaseOrderId])
+  @@index([productId])
 }
 
 model ProductSerial {
@@ -179,6 +195,9 @@ model ProductSerial {
 
   @@index([productId, status])
   @@index([serialNumber])
+  @@index([saleId])
+  @@index([saleItemId])
+  @@index([purchaseItemId])
 }
 
 model Setting {
@@ -212,6 +231,8 @@ model Warranty {
 
   @@index([endDate])
   @@index([productId])
+  @@index([saleId])
+  @@index([customerId])
 }
 
 model WarrantyClaim {
@@ -243,4 +264,14 @@ model AuditLog {
   @@index([entity])
   @@index([action])
   @@index([createdAt])
+}
+model PurchasePayment {
+  id              Int           @id @default(autoincrement())
+  purchaseOrderId Int
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  amount          Decimal       @db.Decimal(15, 2)
+  note            String?
+  createdAt       DateTime      @default(now())
+
+  @@index([purchaseOrderId])
 }

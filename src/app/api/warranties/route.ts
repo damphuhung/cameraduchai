@@ -31,6 +31,7 @@ export async function GET(req: Request) {
   }
 
   const data = await prisma.warranty.findMany({
+    relationLoadStrategy: 'join', // 1 truy vấn thay vì 6
     where,
     include: {
       serial: true,

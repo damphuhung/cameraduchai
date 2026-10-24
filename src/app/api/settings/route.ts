@@ -6,12 +6,23 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 
+// Cache cấu hình cửa hàng trong bộ nhớ của function (ít khi đổi, nhưng ~mọi trang đều đọc).
+// Mỗi function instance có cache riêng nên bản mới có thể chậm tối đa TTL giây ở instance khác.
+const TTL_MS = 30_000;
+let cache: { value: any; at: number } | null = null;
+
+async function loadSettings() {
+  if (cache && Date.now() - cache.at < TTL_MS) return cache.value;
+  let s = await prisma.setting.findUnique({ where: { id: 1 } });
+  if (!s) s = await prisma.setting.create({ data: { id: 1 } });
+  cache = { value: s, at: Date.now() };
+  return s;
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  let s = await prisma.setting.findUnique({ where: { id: 1 } });
-  if (!s) s = await prisma.setting.create({ data: { id: 1 } });
-  return NextResponse.json(s);
+  return NextResponse.json(await loadSettings());
 }
 
 export async function PATCH(req: Request) {
@@ -31,6 +42,7 @@ export async function PATCH(req: Request) {
   };
   const before = await prisma.setting.findUnique({ where: { id: 1 } });
   const s = await prisma.setting.upsert({ where: { id: 1 }, create: { id: 1, ...data }, update: data });
+  cache = { value: s, at: Date.now() };
 
   const changes: any = {};
   if (before) {
