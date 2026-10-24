@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic';
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
@@ -8,12 +6,11 @@ import { logAudit } from '@/lib/audit';
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const data = await prisma.purchaseOrder.findUnique({
-    relationLoadStrategy: 'join', // 1 truy vấn thay vì 5
     where: { id: Number(params.id) },
     include: {
       supplier: true,
       items: { include: { product: true, serials: true } },
-      payments: { orderBy: { createdAt: 'desc' } }, // Lấy lịch sử thanh toán
+      payments: { orderBy: { createdAt: 'desc' } } // Lấy lịch sử thanh toán
     },
   });
   if (!data) return NextResponse.json({ error: 'Không tìm thấy' }, { status: 404 });
@@ -31,8 +28,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const total = Number(po.total);
   const paidOld = Number(po.paid);
   const remaining = Math.max(0, total - paidOld);
-  // Tránh ghi thêm một dòng thanh toán 0đ khi phiếu đã trả đủ
-  if (remaining <= 0) return NextResponse.json({ error: 'Đã thanh toán đủ' }, { status: 400 });
 
   let additionalPaid = 0;
   if (body.markAsPaid) additionalPaid = remaining;
@@ -52,7 +47,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         purchaseOrderId: po.id,
         amount: additionalPaid,
         note: body.markAsPaid ? 'Thanh toán đủ' : 'Thanh toán một phần',
-      },
+      }
     });
 
     // 3. Giảm công nợ nhà cung cấp
@@ -63,7 +58,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       });
     }
     return p;
-  }, { maxWait: 10_000, timeout: 30_000 });
+  });
 
   await logAudit({
     userId: session.user.id,

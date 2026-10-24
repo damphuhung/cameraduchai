@@ -8,7 +8,6 @@ import { logAudit } from '@/lib/audit';
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const data = await prisma.sale.findUnique({
-    relationLoadStrategy: 'join', // 1 truy vấn thay vì 5
     where: { id: Number(params.id) },
     include: {
       customer: true,
@@ -45,7 +44,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (reduce > 0) await tx.customer.update({ where: { id: sale.customerId }, data: { debt: { decrement: reduce } } });
     }
     return s;
-  }, { maxWait: 10_000, timeout: 30_000 });
+  });
 
   await logAudit({
     userId: session.user.id,

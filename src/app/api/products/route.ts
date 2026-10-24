@@ -42,7 +42,6 @@ export async function GET(req: Request) {
   if (stockStatus === 'in') where.stock = { gt: 0 };
 
   let data = await prisma.product.findMany({
-    relationLoadStrategy: 'join', // 1 truy vấn thay vì 3 (sản phẩm + danh mục + hãng)
     where,
     include: { category: true, brand: true },
   });

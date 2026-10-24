@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { parseVNDate } from '@/lib/date';
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -24,9 +23,8 @@ export async function GET(req: Request) {
   if (action) where.action = action;
   if (entity) where.entity = entity;
   if (userId) where.userId = userId;
-  const fromDate = parseVNDate(from, 'start');
-  const toDate = parseVNDate(to, 'end');
-  if (fromDate || toDate) where.createdAt = { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) };
+  if (from) where.createdAt = { ...where.createdAt, gte: new Date(from + 'T00:00:00') };
+  if (to) where.createdAt = { ...where.createdAt, lte: new Date(to + 'T23:59:59') };
   if (search) where.OR = [
     { description: { contains: search, mode: 'insensitive' } },
     { userName: { contains: search, mode: 'insensitive' } },
