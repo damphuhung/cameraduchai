@@ -124,7 +124,30 @@ export async function POST(req: Request) {
           code, customerId: body.customerId ?? null, userId: session.user.id,
           subtotal, discount: body.discount, total,
           paid: actualPaid, bonus: bonus, paymentMethod: body.paymentMethod, note: body.note,
-          items: { create: body.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice, lineTotal: i.unitPrice * i.quantity })) },
+          items: { create: await Promise.all(body.items.map(async (i) => {
+              let itemCostPrice = Number(productMap.get(i.productId)!.costPrice);
+              
+              // Nếu sản phẩm quản lý S/N, lấy giá nhập của Serial đó
+              if (i.serialIds && i.serialIds.length > 0) {
+                const serials = await tx.productSerial.findMany({
+                  where: { id: { in: i.serialIds } }
+                });
+                // Tính giá vốn trung bình của các serial được chọn (thường chỉ bán 1 serial)
+                const totalCost = serials.reduce((sum, ser) => sum + Number(ser.importPrice || 0), 0);
+                if (serials.length > 0) {
+                  itemCostPrice = totalCost / serials.length;
+                }
+              }
+
+              return {
+                productId: i.productId,
+                quantity: i.quantity,
+                unitPrice: i.unitPrice,
+                costPrice: itemCostPrice, // <-- LƯU GIÁ VỐN VÀO ĐÂY
+                lineTotal: i.unitPrice * i.quantity,
+              };
+            }))
+          },
         },
         include: { items: true },
       });

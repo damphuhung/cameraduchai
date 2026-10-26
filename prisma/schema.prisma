@@ -136,6 +136,7 @@ model SaleItem {
   product   Product         @relation(fields: [productId], references: [id])
   quantity  Int
   unitPrice Decimal         @db.Decimal(15, 2)
+  costPrice Decimal         @default(0) @db.Decimal(15, 2) // <-- THÊM DÒNG NÀY (Giá vốn lúc bán)
   lineTotal Decimal         @db.Decimal(15, 2)
   serials   ProductSerial[]
 

@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
     for (const it of s.items) {
       const revenue = Number(it.lineTotal);
-      const cost = Number(it.product.costPrice) * it.quantity;
+      const cost = Number(it.costPrice || it.product.costPrice) * it.quantity;
       totalRevenue += revenue;
       totalCost += cost;
       dayEntry.revenue += revenue;

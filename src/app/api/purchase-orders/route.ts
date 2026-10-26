@@ -117,7 +117,13 @@ export async function POST(req: Request) {
         const item = order.items[idx];
         const p = productMap.get(it.productId)!;
 
-        await tx.product.update({ where: { id: it.productId }, data: { stock: { increment: it.quantity } } });
+        await tx.product.update({ where: { id: it.productId }, 
+          data: { 
+            stock: { increment: it.quantity },
+            // Tự động cập nhật lại giá nhập mới nhất cho sản phẩm
+            costPrice: it.unitCost 
+          } 
+        });
 
         if (p.trackSerial && it.serials) {
           await tx.productSerial.createMany({
